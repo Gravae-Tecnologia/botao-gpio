@@ -88,10 +88,10 @@ async function main() {
   const rl = readline.createInterface({ input: stdin, output: stdout });
 
   const apiKey =
-    (await rl.question(`Chave da API [${defaultApiKey || "nenhuma"}]: `)) ||
+    (await rl.question(`apiKey [${defaultApiKey || "nenhuma"}]: `)) ||
     defaultApiKey;
   const groupKey =
-    (await rl.question(`Chave do grupo [${defaultGroupKey || "nenhuma"}]: `)) ||
+    (await rl.question(`groupKey [${defaultGroupKey || "nenhuma"}]: `)) ||
     defaultGroupKey;
 
   // ordem fixa de GPIO solicitada pelo usuário
