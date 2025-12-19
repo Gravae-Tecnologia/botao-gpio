@@ -2,38 +2,56 @@ import { Gpio } from "onoff";
 import axios from "axios";
 import fs from "node:fs";
 import path from "node:path";
+import { SITE, BUTTONS, SHINOBI_BASE_URL, DEBOUNCE_MS, COOLDOWN_MS, HTTP_TIMEOUT_MS, REGION_NAME, CONFIDENCE, } from "./config";
 const LOG_DIR = path.resolve(process.cwd(), "logs");
 if (!fs.existsSync(LOG_DIR))
     fs.mkdirSync(LOG_DIR, { recursive: true });
 function logLine(filename, line) {
     fs.appendFileSync(path.join(LOG_DIR, filename), line, { encoding: "utf8" });
 }
-function logPress(name) {
-    const line = `${new Date().toISOString()} - ${name}\n`;
+function logPress(name, pin) {
+    const line = `${new Date().toISOString()} - pin:${pin} - ${name}\n`;
     logLine("button_presses_details.txt", line);
 }
 // ========================== CONFIG ==========================
-const SITE = {
-    apiKey: "BfXF0LOk10eFqltdZtlu3VslrttTyL",
-    groupKey: "ElMirador",
-};
-const BUTTONS = {
-    6: { monitorSlugs: ["cancha04_camera01", "cancha04_camera02"] },
-    26: { monitorSlugs: ["cancha01_camera01"] },
-    19: { monitorSlugs: ["cancha02_camera01"] },
-    13: { monitorSlugs: ["cancha03_camera01"] },
-};
-const SHINOBI_BASE_URL = "http://127.0.0.1:8080";
-const MOTION_DATA = "{plug:Quadra1,name:stairs,reason:motion,confidence:197.4755859375}";
-const DEBOUNCE_MS = 200;
-const COOLDOWN_MS = 5000;
-const HTTP_TIMEOUT_MS = 3000;
+// const SITE: SiteConfig = {
+//   apiKey: "BfXF0LOk10eFqltdZtlu3VslrttTyL",
+//   groupKey: "ElMirador",
+// };
+// const BUTTONS: Partial<Record<GPIO, ButtonConfig>> = {
+//   "6": {
+//     monitorSlugs: [
+//       "cancha04_camera01",
+//       "cancha04_camera02",
+//       "cancha04_camera03",
+//     ],
+//   },
+//   "26": { monitorSlugs: ["cancha01_camera01"] },
+//   "19": { monitorSlugs: ["cancha02_camera01"] },
+//   "13": { monitorSlugs: ["cancha03_camera01"] },
+// };
+// const SHINOBI_BASE_URL = "http://127.0.0.1:8080";
+// const DEBOUNCE_MS = 200;
+// const COOLDOWN_MS = 5000;
+// const HTTP_TIMEOUT_MS = 3000;
+// Alinhado à doc de monitor triggers (payload JSON)
+// const REGION_NAME = "gpio_button";
+// const CONFIDENCE = 197.4755859375;
 // ============================================================
 const cooldownExpire = {};
 const gpios = {};
+function buildMotionData(monitorSlug) {
+    // payload JSON esperado pelo Shinobi
+    return JSON.stringify({
+        plug: monitorSlug,
+        name: REGION_NAME,
+        reason: "motion",
+        confidence: CONFIDENCE,
+    });
+}
 function buildUrl(site, monitorSlug) {
-    // mantém o padrão; encode no data pra não quebrar query
-    return `${SHINOBI_BASE_URL}/${site.apiKey}/motion/${site.groupKey}/${monitorSlug}?data=${encodeURIComponent(MOTION_DATA)}`;
+    const data = buildMotionData(monitorSlug);
+    return `${SHINOBI_BASE_URL}/${site.apiKey}/motion/${site.groupKey}/${monitorSlug}?data=${encodeURIComponent(data)}`;
 }
 async function sendRequest(url, name) {
     try {
@@ -57,12 +75,11 @@ function setupPin(pin, cfg) {
         if (now < cooldownExpire[pin])
             return;
         cooldownExpire[pin] = now + COOLDOWN_MS;
-        // dispara para todos os slugs desse pin
         for (const monitorSlug of cfg.monitorSlugs) {
             const name = monitorSlug;
             const url = buildUrl(SITE, monitorSlug);
             console.log(`🔘 Aperto registrado na ${name} (${pin})`);
-            logPress(name);
+            logPress(name, pin);
             void sendRequest(url, name);
         }
     });

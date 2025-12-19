@@ -2,17 +2,17 @@ import { Gpio } from "onoff";
 import axios from "axios";
 import fs from "node:fs";
 import path from "node:path";
-
-type GPIO = 26 | 19 | 13 | 6 | 5 | 21 | 20 | 16;
-
-type SiteConfig = {
-  apiKey: string;
-  groupKey: string;
-};
-
-type ButtonConfig = {
-  monitorSlugs: string[];
-};
+import {
+  SITE,
+  BUTTONS,
+  SHINOBI_BASE_URL,
+  DEBOUNCE_MS,
+  COOLDOWN_MS,
+  HTTP_TIMEOUT_MS,
+  REGION_NAME,
+  CONFIDENCE,
+} from "./config";
+import type { GPIO, SiteConfig, ButtonConfig } from "./config";
 
 const LOG_DIR = path.resolve(process.cwd(), "logs");
 if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
@@ -27,33 +27,33 @@ function logPress(name: string, pin: number) {
 }
 
 // ========================== CONFIG ==========================
-const SITE: SiteConfig = {
-  apiKey: "BfXF0LOk10eFqltdZtlu3VslrttTyL",
-  groupKey: "ElMirador",
-};
+// const SITE: SiteConfig = {
+//   apiKey: "BfXF0LOk10eFqltdZtlu3VslrttTyL",
+//   groupKey: "ElMirador",
+// };
 
-const BUTTONS: Partial<Record<GPIO, ButtonConfig>> = {
-  "6": {
-    monitorSlugs: [
-      "cancha04_camera01",
-      "cancha04_camera02",
-      "cancha04_camera03",
-    ],
-  },
-  "26": { monitorSlugs: ["cancha01_camera01"] },
-  "19": { monitorSlugs: ["cancha02_camera01"] },
-  "13": { monitorSlugs: ["cancha03_camera01"] },
-};
+// const BUTTONS: Partial<Record<GPIO, ButtonConfig>> = {
+//   "6": {
+//     monitorSlugs: [
+//       "cancha04_camera01",
+//       "cancha04_camera02",
+//       "cancha04_camera03",
+//     ],
+//   },
+//   "26": { monitorSlugs: ["cancha01_camera01"] },
+//   "19": { monitorSlugs: ["cancha02_camera01"] },
+//   "13": { monitorSlugs: ["cancha03_camera01"] },
+// };
 
-const SHINOBI_BASE_URL = "http://127.0.0.1:8080";
+// const SHINOBI_BASE_URL = "http://127.0.0.1:8080";
 
-const DEBOUNCE_MS = 200;
-const COOLDOWN_MS = 5000;
-const HTTP_TIMEOUT_MS = 3000;
+// const DEBOUNCE_MS = 200;
+// const COOLDOWN_MS = 5000;
+// const HTTP_TIMEOUT_MS = 3000;
 
 // Alinhado à doc de monitor triggers (payload JSON)
-const REGION_NAME = "gpio_button";
-const CONFIDENCE = 197.4755859375;
+// const REGION_NAME = "gpio_button";
+// const CONFIDENCE = 197.4755859375;
 // ============================================================
 
 const cooldownExpire: Record<number, number> = {};
